@@ -1,8 +1,17 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Katering\Http\Controllers\KateringController;
+use Modules\Katering\Http\Controllers\MenuController;
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::resource('katerings', KateringController::class)->names('katering');
-});
+/*
+|--------------------------------------------------------------------------
+| Web Routes - Katering Module
+|--------------------------------------------------------------------------
+|
+| Clean Architecture Flow:
+| Request -> Controller -> Service -> Repository -> View
+|
+*/
+
+Route::get('/menus', [MenuController::class, 'index'])->name('menus.index');
+Route::get('/menus/{id}', [MenuController::class, 'show'])->name('menus.show');

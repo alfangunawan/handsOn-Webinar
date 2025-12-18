@@ -2,23 +2,22 @@
 
 namespace Modules\Order\Http\Controllers;
 
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Modules\Order\Requests\CreateOrderRequest;
-use Modules\Order\Http\Resources\OrderResource;
 use Modules\Order\Services\OrderService;
 
 /**
- * OrderController - Interface Layer
+ * OrderController - Interface Layer (Web)
  * 
  * Clean Architecture Flow:
- * Request (Validation) -> Controller -> Service (Use Case) -> Repository -> Resource
+ * Request (Validation) -> Controller -> Service (Use Case) -> Repository -> View
  * 
  * Controller hanya bertanggung jawab untuk:
  * 1. Menerima request (validasi di Request class)
  * 2. Memanggil Service layer
- * 3. Mengembalikan response menggunakan Resource
+ * 3. Mengembalikan View atau Redirect
  */
 class OrderController extends Controller
 {
@@ -30,84 +29,71 @@ class OrderController extends Controller
     }
 
     /**
-     * GET /api/v1/orders
+     * GET /orders
+     * Menampilkan halaman daftar pesanan
      * 
-     * Flow: Request -> Controller -> Service -> Repository -> Resource
+     * Flow: Request -> Controller -> Service -> Repository -> View
      */
-    public function index(Request $request): JsonResponse
+    public function index(): View
     {
-        // 1. Request: Get validated query parameter
-        $userId = (int) $request->query('user_id', 1);
+        // Demo: hardcoded user_id
+        $userId = 1;
         
-        // 2. Controller calls Service
+        // Controller calls Service
         $orders = $this->orderService->getByUserId($userId);
         
-        // 3. Return using Resource
-        return response()->json([
-            'success' => true,
-            'data' => OrderResource::collection($orders)
-        ]);
+        // Return View with data
+        return view('pages.orders', compact('orders'));
     }
 
     /**
-     * GET /api/v1/orders/{id}
-     * 
-     * Flow: Request -> Controller -> Service -> Repository -> Resource
+     * GET /orders/{id}
+     * Menampilkan detail pesanan
      */
-    public function show($id): JsonResponse
+    public function show($id): View
     {
         // Controller calls Service
         $order = $this->orderService->findById($id);
         
         if (!$order) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Pesanan tidak ditemukan'
-            ], 404);
+            abort(404, 'Pesanan tidak ditemukan');
         }
         
-        // Return using Resource
-        return response()->json([
-            'success' => true,
-            'data' => new OrderResource($order)
-        ]);
+        // Return View with data
+        return view('pages.order-detail', compact('order'));
     }
 
     /**
-     * POST /api/v1/orders
+     * POST /orders
+     * Membuat pesanan baru
      * 
      * Flow: 
      * 1. CreateOrderRequest -> Validasi input
      * 2. Controller -> Meneruskan ke Service
      * 3. OrderService -> Business logic 
      * 4. OrderRepository -> Simpan ke database
-     * 5. OrderResource -> Format response
+     * 5. Redirect dengan flash message
      */
-    public function store(CreateOrderRequest $request): JsonResponse
+    public function store(CreateOrderRequest $request): RedirectResponse
     {
         // 1. Input sudah divalidasi oleh CreateOrderRequest
         $userId = 1; // Demo: hardcoded user
         
         try {
             // 2-4. Controller -> Service -> Repository
-            $order = $this->orderService->createOrder(
+            $this->orderService->createOrder(
                 $userId,
                 $request->input('menu_id'),
                 $request->input('quantity')
             );
             
-            // 5. Return using Resource
-            return response()->json([
-                'success' => true,
-                'message' => 'Pesanan berhasil dibuat',
-                'data' => new OrderResource($order)
-            ], 201);
+            // 5. Redirect dengan success message
+            return redirect('/orders')->with('success', 'Pesanan berhasil dibuat!');
             
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 400);
+            return redirect()->back()
+                ->with('error', $e->getMessage())
+                ->withInput();
         }
     }
 }

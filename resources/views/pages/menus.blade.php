@@ -14,20 +14,20 @@
     <!-- Menu Section -->
     <section class="section">
         <div class="container">
-            @if(isset($menus) && count($menus) > 0)
+            @if($menus->count() > 0)
                 <div class="menu-grid">
                     @foreach($menus as $menu)
                         <div class="menu-card">
                             <div class="menu-image">🍽️</div>
                             <div class="menu-content">
                                 <span class="menu-category">Katering</span>
-                                <h3>{{ $menu['name'] ?? 'Menu Item' }}</h3>
-                                <p>{{ $menu['description'] ?? 'Deskripsi menu yang lezat dan nikmat.' }}</p>
+                                <h3>{{ $menu->name }}</h3>
+                                <p>{{ $menu->description ?? 'Menu lezat dari katering terpercaya.' }}</p>
                                 <div class="menu-footer">
-                                    <div class="menu-price">Rp {{ number_format($menu['price'] ?? 0, 0, ',', '.') }} <span>/porsi</span></div>
-                                    <form action="/orders" method="POST" style="display: inline;">
+                                    <div class="menu-price">Rp {{ number_format($menu->price, 0, ',', '.') }} <span>/porsi</span></div>
+                                    <form action="{{ route('orders.store') }}" method="POST" style="display: inline;">
                                         @csrf
-                                        <input type="hidden" name="menu_id" value="{{ $menu['id'] ?? 1 }}">
+                                        <input type="hidden" name="menu_id" value="{{ $menu->id }}">
                                         <input type="hidden" name="quantity" value="1">
                                         <button type="submit" class="btn btn-primary">Pesan</button>
                                     </form>
@@ -37,7 +37,7 @@
                     @endforeach
                 </div>
             @else
-                <!-- Sample Menu Cards for Demo -->
+                <!-- Empty State / Demo Data -->
                 <div class="menu-grid">
                     <div class="menu-card">
                         <div class="menu-image">🍛</div>
@@ -47,7 +47,7 @@
                             <p>Nasi putih dengan ayam geprek sambal pedas, lalapan segar, dan kerupuk renyah.</p>
                             <div class="menu-footer">
                                 <div class="menu-price">Rp 25.000 <span>/porsi</span></div>
-                                <a href="#" class="btn btn-primary">Pesan</a>
+                                <button class="btn btn-primary" disabled>Pesan</button>
                             </div>
                         </div>
                     </div>
@@ -59,7 +59,7 @@
                             <p>Rendang daging sapi empuk dengan bumbu rempah khas Padang yang nikmat.</p>
                             <div class="menu-footer">
                                 <div class="menu-price">Rp 35.000 <span>/porsi</span></div>
-                                <a href="#" class="btn btn-primary">Pesan</a>
+                                <button class="btn btn-primary" disabled>Pesan</button>
                             </div>
                         </div>
                     </div>
@@ -71,46 +71,13 @@
                             <p>Sayuran segar dengan protein pilihan dan dressing homemade yang lezat.</p>
                             <div class="menu-footer">
                                 <div class="menu-price">Rp 30.000 <span>/porsi</span></div>
-                                <a href="#" class="btn btn-primary">Pesan</a>
+                                <button class="btn btn-primary" disabled>Pesan</button>
                             </div>
                         </div>
                     </div>
-                    <div class="menu-card">
-                        <div class="menu-image">🍖</div>
-                        <div class="menu-content">
-                            <span class="menu-category">BBQ</span>
-                            <h3>Grilled Chicken Set</h3>
-                            <p>Ayam panggang dengan bumbu BBQ special, nasi butter, dan sayuran grill.</p>
-                            <div class="menu-footer">
-                                <div class="menu-price">Rp 40.000 <span>/porsi</span></div>
-                                <a href="#" class="btn btn-primary">Pesan</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="menu-card">
-                        <div class="menu-image">🍜</div>
-                        <div class="menu-content">
-                            <span class="menu-category">Mie</span>
-                            <h3>Mie Goreng Special</h3>
-                            <p>Mie goreng dengan topping telur, bakso, dan sayuran pilihan.</p>
-                            <div class="menu-footer">
-                                <div class="menu-price">Rp 22.000 <span>/porsi</span></div>
-                                <a href="#" class="btn btn-primary">Pesan</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="menu-card">
-                        <div class="menu-image">🍱</div>
-                        <div class="menu-content">
-                            <span class="menu-category">Bento</span>
-                            <h3>Bento Salmon Teriyaki</h3>
-                            <p>Set bento dengan salmon teriyaki, nasi jepang, dan side dish lengkap.</p>
-                            <div class="menu-footer">
-                                <div class="menu-price">Rp 55.000 <span>/porsi</span></div>
-                                <a href="#" class="btn btn-primary">Pesan</a>
-                            </div>
-                        </div>
-                    </div>
+                </div>
+                <div class="empty-state" style="margin-top: 40px;">
+                    <p style="color: var(--gray-500);">Belum ada menu di database. Jalankan seeder untuk menambahkan data demo.</p>
                 </div>
             @endif
         </div>

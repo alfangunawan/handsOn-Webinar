@@ -2,21 +2,20 @@
 
 namespace Modules\Katering\Http\Controllers;
 
-use Illuminate\Http\JsonResponse;
+use Illuminate\View\View;
 use Illuminate\Routing\Controller;
-use Modules\Katering\Http\Resources\MenuResource;
 use Modules\Katering\Services\MenuService;
 
 /**
- * MenuController - Interface Layer
+ * MenuController - Interface Layer (Web)
  * 
  * Clean Architecture Flow:
- * Request -> Controller -> Service (Use Case) -> Repository -> Resource
+ * Request -> Controller -> Service (Use Case) -> Repository -> View
  * 
  * Controller hanya bertanggung jawab untuk:
  * 1. Menerima request
  * 2. Memanggil Service layer
- * 3. Mengembalikan response menggunakan Resource
+ * 3. Mengembalikan View dengan data
  */
 class MenuController extends Controller
 {
@@ -28,43 +27,34 @@ class MenuController extends Controller
     }
 
     /**
-     * GET /api/v1/menus
+     * GET /menus
+     * Menampilkan halaman daftar menu
      * 
-     * Flow: Request -> Controller -> Service -> Repository -> Resource
+     * Flow: Request -> Controller -> Service -> Repository -> View
      */
-    public function index(): JsonResponse
+    public function index(): View
     {
         // Controller calls Service
         $menus = $this->menuService->getAll();
         
-        // Return using Resource
-        return response()->json([
-            'success' => true,
-            'data' => MenuResource::collection($menus)
-        ]);
+        // Return View with data
+        return view('pages.menus', compact('menus'));
     }
 
     /**
-     * GET /api/v1/menus/{id}
-     * 
-     * Flow: Request -> Controller -> Service -> Repository -> Resource
+     * GET /menus/{id}
+     * Menampilkan detail menu
      */
-    public function show($id): JsonResponse
+    public function show($id): View
     {
         // Controller calls Service
         $menu = $this->menuService->findById($id);
         
         if (!$menu) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Menu tidak ditemukan'
-            ], 404);
+            abort(404, 'Menu tidak ditemukan');
         }
         
-        // Return using Resource
-        return response()->json([
-            'success' => true,
-            'data' => new MenuResource($menu)
-        ]);
+        // Return View with data
+        return view('pages.menu-detail', compact('menu'));
     }
 }
