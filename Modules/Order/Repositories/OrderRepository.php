@@ -6,14 +6,22 @@ use Modules\Order\Entities\Order;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
- * OrderRepository - Data Access Layer
+ * OrderRepository - Infrastructure/Data Access Layer
  * 
- * Repository bertugas:
- * - Menyembunyikan detail implementasi database
- * - Menyediakan interface untuk akses data Order
- * - Menggunakan Eloquent untuk interaksi dengan database
+ * ┌─────────────────────────────────────────────────────────────────┐
+ * │                    CLEAN ARCHITECTURE FLOW                      │
+ * ├─────────────────────────────────────────────────────────────────┤
+ * │  Request → Controller → Service → Repository (this) → Entity   │
+ * └─────────────────────────────────────────────────────────────────┘
  * 
- * Flow: Service -> Repository (this) -> Entity/Model
+ * Repository bertanggung jawab untuk:
+ * 1. Menyembunyikan detail implementasi database
+ * 2. Menyediakan interface untuk akses data
+ * 3. Melakukan operasi CRUD ke database via Eloquent
+ * 
+ * Repository TIDAK boleh:
+ * - Mengandung business logic
+ * - Mengakses HTTP layer
  */
 class OrderRepository
 {
@@ -22,7 +30,9 @@ class OrderRepository
      */
     public function all(): Collection
     {
-        return Order::all();
+        return Order::with(['menu', 'user'])
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     /**
@@ -30,7 +40,7 @@ class OrderRepository
      */
     public function find(int $id): ?Order
     {
-        return Order::find($id);
+        return Order::with(['menu', 'user'])->find($id);
     }
 
     /**
@@ -46,7 +56,10 @@ class OrderRepository
      */
     public function getByUserId(int $userId): Collection
     {
-        return Order::where('user_id', $userId)->orderBy('created_at', 'desc')->get();
+        return Order::with('menu')
+            ->where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     /**
@@ -56,7 +69,7 @@ class OrderRepository
     {
         $order = Order::findOrFail($id);
         $order->update($data);
-        return $order;
+        return $order->fresh(['menu', 'user']);
     }
 
     /**
@@ -65,5 +78,24 @@ class OrderRepository
     public function delete(int $id): bool
     {
         return Order::destroy($id) > 0;
+    }
+
+    /**
+     * Mendapatkan pesanan berdasarkan status
+     */
+    public function getByStatus(string $status): Collection
+    {
+        return Order::with(['menu', 'user'])
+            ->where('status', $status)
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Mendapatkan pesanan pending
+     */
+    public function getPendingOrders(): Collection
+    {
+        return $this->getByStatus('pending');
     }
 }

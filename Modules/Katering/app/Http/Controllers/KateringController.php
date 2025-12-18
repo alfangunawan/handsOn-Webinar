@@ -2,55 +2,121 @@
 
 namespace Modules\Katering\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Controller;
+use Modules\Katering\Services\KateringService;
+use Modules\Katering\Requests\CreateKateringRequest;
+use Modules\Katering\Requests\UpdateKateringRequest;
 
+/**
+ * KateringController - Interface/Presentation Layer
+ * 
+ * ┌─────────────────────────────────────────────────────────────────┐
+ * │                    CLEAN ARCHITECTURE FLOW                      │
+ * ├─────────────────────────────────────────────────────────────────┤
+ * │  Request (Validation) → Controller (this) → Service → Repository│
+ * └─────────────────────────────────────────────────────────────────┘
+ * 
+ * Controller bertanggung jawab untuk:
+ * 1. Menerima HTTP Request (validasi via Request class)
+ * 2. Memanggil Service layer
+ * 3. Mengembalikan Response (View atau Redirect)
+ */
 class KateringController extends Controller
 {
+    protected KateringService $kateringService;
+
     /**
-     * Display a listing of the resource.
+     * Dependency Injection - Service di-inject via constructor
      */
-    public function index()
+    public function __construct(KateringService $kateringService)
     {
-        return view('katering::index');
+        $this->kateringService = $kateringService;
     }
 
     /**
-     * Show the form for creating a new resource.
+     * GET /katerings
+     * Menampilkan semua katering
      */
-    public function create()
+    public function index(): View
     {
-        return view('katering::create');
+        $katerings = $this->kateringService->getAll();
+        return view('katering::katerings.index', compact('katerings'));
     }
 
     /**
-     * Store a newly created resource in storage.
+     * GET /katerings/{id}
+     * Menampilkan detail katering
      */
-    public function store(Request $request) {}
-
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function show(int $id): View
     {
-        return view('katering::show');
+        $katering = $this->kateringService->findById($id);
+        
+        if (!$katering) {
+            abort(404, 'Katering tidak ditemukan');
+        }
+        
+        return view('katering::katerings.show', compact('katering'));
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * GET /katerings/create
+     * Form tambah katering baru
      */
-    public function edit($id)
+    public function create(): View
     {
-        return view('katering::edit');
+        return view('katering::katerings.create');
     }
 
     /**
-     * Update the specified resource in storage.
+     * POST /katerings
+     * Simpan katering baru
      */
-    public function update(Request $request, $id) {}
+    public function store(CreateKateringRequest $request): RedirectResponse
+    {
+        $this->kateringService->create($request->validated());
+        
+        return redirect()->route('katerings.index')
+            ->with('success', 'Katering berhasil ditambahkan!');
+    }
 
     /**
-     * Remove the specified resource from storage.
+     * GET /katerings/{id}/edit
+     * Form edit katering
      */
-    public function destroy($id) {}
+    public function edit(int $id): View
+    {
+        $katering = $this->kateringService->findById($id);
+        
+        if (!$katering) {
+            abort(404, 'Katering tidak ditemukan');
+        }
+        
+        return view('katering::katerings.edit', compact('katering'));
+    }
+
+    /**
+     * PUT /katerings/{id}
+     * Update katering
+     */
+    public function update(UpdateKateringRequest $request, int $id): RedirectResponse
+    {
+        $this->kateringService->update($id, $request->validated());
+        
+        return redirect()->route('katerings.index')
+            ->with('success', 'Katering berhasil diupdate!');
+    }
+
+    /**
+     * DELETE /katerings/{id}
+     * Hapus katering
+     */
+    public function destroy(int $id): RedirectResponse
+    {
+        $this->kateringService->delete($id);
+        
+        return redirect()->route('katerings.index')
+            ->with('success', 'Katering berhasil dihapus!');
+    }
 }

@@ -4,19 +4,25 @@ namespace Modules\Order\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * CreateOrderRequest - Input Validation Layer
+ * 
+ * ┌─────────────────────────────────────────────────────────────────┐
+ * │                    CLEAN ARCHITECTURE FLOW                      │
+ * ├─────────────────────────────────────────────────────────────────┤
+ * │  Request (this) → Controller → Service → Repository → Entity   │
+ * └─────────────────────────────────────────────────────────────────┘
+ * 
+ * Bertanggung jawab untuk validasi input sebelum masuk ke Controller
+ */
 class CreateOrderRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        // Hanya user yang login bisa membuat order
+        return auth()->check();
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
         return [
@@ -25,9 +31,6 @@ class CreateOrderRequest extends FormRequest
         ];
     }
 
-    /**
-     * Get custom messages for validator errors.
-     */
     public function messages(): array
     {
         return [

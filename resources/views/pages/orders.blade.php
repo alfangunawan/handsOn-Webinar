@@ -27,6 +27,10 @@
             @endif
 
             @if($orders->count() > 0)
+                <div class="orders-header">
+                    <h3>Total {{ $orders->count() }} Pesanan</h3>
+                </div>
+                
                 @foreach($orders as $order)
                     <div class="order-card">
                         <div class="order-icon">
@@ -37,28 +41,38 @@
                             {{ $icon }}
                         </div>
                         <div class="order-info">
-                            <h4>Pesanan #{{ $order->id }}</h4>
+                            <h4>{{ $order->menu?->name ?? 'Pesanan #' . $order->id }}</h4>
                             <p>Qty: {{ $order->quantity }} porsi • {{ $order->created_at->format('d M Y H:i') }}</p>
                         </div>
                         <span class="order-status {{ $order->status }}">
                             @switch($order->status)
                                 @case('pending')
-                                    Menunggu
+                                    🕐 Menunggu
                                     @break
                                 @case('processing')
-                                    Diproses
+                                    🍳 Diproses
                                     @break
                                 @case('completed')
-                                    Selesai
+                                    ✅ Selesai
                                     @break
                                 @case('cancelled')
-                                    Dibatalkan
+                                    ❌ Dibatalkan
                                     @break
                                 @default
                                     {{ ucfirst($order->status) }}
                             @endswitch
                         </span>
                         <div class="order-price">Rp {{ number_format($order->total_price, 0, ',', '.') }}</div>
+                        <div class="order-actions">
+                            <a href="{{ route('orders.show', $order->id) }}" class="btn btn-outline btn-sm">Detail</a>
+                            @if($order->status === 'pending')
+                                <form action="{{ route('orders.destroy', $order->id) }}" method="POST" style="display:inline" onsubmit="return confirm('Yakin ingin membatalkan pesanan ini?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger-outline btn-sm">Batalkan</button>
+                                </form>
+                            @endif
+                        </div>
                     </div>
                 @endforeach
             @else
@@ -72,3 +86,47 @@
         </div>
     </section>
 @endsection
+
+@push('styles')
+<style>
+    .orders-header {
+        margin-bottom: 24px;
+    }
+    .orders-header h3 {
+        color: var(--gray-600);
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    .order-actions {
+        display: flex;
+        gap: 8px;
+    }
+    .btn-sm {
+        padding: 8px 16px;
+        font-size: 0.8rem;
+    }
+    .btn-danger-outline {
+        background: transparent;
+        color: #dc2626;
+        border: 2px solid #fecaca;
+        padding: 8px 16px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border-radius: var(--radius);
+        transition: var(--transition);
+    }
+    .btn-danger-outline:hover {
+        background: #fee2e2;
+        border-color: #dc2626;
+    }
+    .order-status.processing {
+        background: #dbeafe;
+        color: #2563eb;
+    }
+    .order-status.cancelled {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+</style>
+@endpush
+

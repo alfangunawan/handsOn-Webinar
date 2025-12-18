@@ -4,16 +4,25 @@ namespace Modules\Katering\Repositories;
 
 use Modules\Katering\Entities\Menu;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 /**
- * MenuRepository - Data Access Layer
+ * MenuRepository - Infrastructure/Data Access Layer
  * 
- * Repository bertugas:
- * - Menyembunyikan detail implementasi database
- * - Menyediakan interface untuk akses data Menu
- * - Menggunakan Eloquent untuk interaksi dengan database
+ * ┌─────────────────────────────────────────────────────────────────┐
+ * │                    CLEAN ARCHITECTURE FLOW                      │
+ * ├─────────────────────────────────────────────────────────────────┤
+ * │  Request → Controller → Service → Repository (this) → Entity   │
+ * └─────────────────────────────────────────────────────────────────┘
  * 
- * Flow: Service -> Repository (this) -> Entity/Model
+ * Repository bertanggung jawab untuk:
+ * 1. Menyembunyikan detail implementasi database
+ * 2. Menyediakan interface untuk akses data
+ * 3. Melakukan operasi CRUD ke database via Eloquent
+ * 
+ * Repository TIDAK boleh:
+ * - Mengandung business logic
+ * - Mengakses HTTP layer
  */
 class MenuRepository
 {
@@ -22,7 +31,15 @@ class MenuRepository
      */
     public function all(): Collection
     {
-        return Menu::all();
+        return Menu::with('katering')->get();
+    }
+
+    /**
+     * Mendapatkan menu dengan pagination
+     */
+    public function paginate(int $perPage = 10): LengthAwarePaginator
+    {
+        return Menu::with('katering')->paginate($perPage);
     }
 
     /**
@@ -30,7 +47,7 @@ class MenuRepository
      */
     public function find(int $id): ?Menu
     {
-        return Menu::find($id);
+        return Menu::with('katering')->find($id);
     }
 
     /**
@@ -48,7 +65,7 @@ class MenuRepository
     {
         $menu = Menu::findOrFail($id);
         $menu->update($data);
-        return $menu;
+        return $menu->fresh();
     }
 
     /**
@@ -65,5 +82,13 @@ class MenuRepository
     public function getByKateringId(int $kateringId): Collection
     {
         return Menu::where('katering_id', $kateringId)->get();
+    }
+
+    /**
+     * Mencari menu berdasarkan nama
+     */
+    public function searchByName(string $keyword): Collection
+    {
+        return Menu::where('name', 'like', "%{$keyword}%")->get();
     }
 }

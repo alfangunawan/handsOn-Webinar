@@ -9,20 +9,31 @@ use Exception;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
- * OrderService - Use Case / Business Logic Layer
+ * OrderService - Application/Use Case Layer
  * 
- * Service berisi logika bisnis yang:
- * - Tidak bergantung pada framework (HTTP, database)
- * - Meng-orkestrasi Repository untuk akses data
- * - Menerapkan aturan bisnis (validasi menu, hitung total)
+ * ┌─────────────────────────────────────────────────────────────────┐
+ * │                    CLEAN ARCHITECTURE FLOW                      │
+ * ├─────────────────────────────────────────────────────────────────┤
+ * │  Request → Controller → Service (this) → Repository → Entity   │
+ * └─────────────────────────────────────────────────────────────────┘
  * 
- * Flow: Controller -> Service (this) -> Repository
+ * Service bertanggung jawab untuk:
+ * 1. Mengandung Business Logic / Use Case
+ * 2. Mengorkestrasikan Repository untuk akses data
+ * 3. Menerapkan aturan bisnis
+ * 
+ * Service TIDAK boleh:
+ * - Mengakses HTTP Request/Response
+ * - Mengandung query database langsung
  */
 class OrderService
 {
     protected OrderRepository $orderRepository;
     protected MenuRepository $menuRepository;
 
+    /**
+     * Dependency Injection - Repositories di-inject via constructor
+     */
     public function __construct(
         OrderRepository $orderRepository, 
         MenuRepository $menuRepository
@@ -32,7 +43,7 @@ class OrderService
     }
 
     /**
-     * Mendapatkan semua pesanan
+     * Use Case: Mendapatkan semua pesanan
      */
     public function getAll(): Collection
     {
@@ -40,7 +51,7 @@ class OrderService
     }
 
     /**
-     * Mendapatkan pesanan berdasarkan user ID
+     * Use Case: Mendapatkan pesanan berdasarkan user ID
      */
     public function getByUserId(int $userId): Collection
     {
@@ -48,7 +59,7 @@ class OrderService
     }
 
     /**
-     * Mencari pesanan berdasarkan ID
+     * Use Case: Mencari pesanan berdasarkan ID
      */
     public function findById(int $id): ?Order
     {
@@ -56,28 +67,28 @@ class OrderService
     }
 
     /**
-     * Membuat pesanan baru
+     * Use Case: Membuat pesanan baru
      * 
      * Business Logic:
-     * 1. Validasi menu exists
-     * 2. Hitung total harga (price * quantity)
-     * 3. Set status awal 'pending'
+     * 1. Validasi menu harus ada di database
+     * 2. Hitung total harga = price × quantity
+     * 3. Set status awal = 'pending'
      * 
      * @throws Exception jika menu tidak ditemukan
      */
     public function createOrder(int $userId, int $menuId, int $quantity): Order
     {
-        // Business Rule: Validasi menu harus ada
+        // Business Rule 1: Menu harus ada
         $menu = $this->menuRepository->find($menuId);
         
         if (!$menu) {
             throw new Exception("Menu dengan ID {$menuId} tidak ditemukan");
         }
 
-        // Business Rule: Hitung total harga
+        // Business Rule 2: Hitung total harga
         $totalPrice = $menu->price * $quantity;
 
-        // Simpan ke repository
+        // Business Rule 3: Status awal pending
         return $this->orderRepository->create([
             'user_id' => $userId,
             'menu_id' => $menuId,
@@ -88,15 +99,12 @@ class OrderService
     }
 
     /**
-     * Update pesanan
-     */
-    public function update(int $id, array $data): Order
-    {
-        return $this->orderRepository->update($id, $data);
-    }
-
-    /**
-     * Update status pesanan
+     * Use Case: Update status pesanan
+     * 
+     * Business Logic:
+     * - Status harus valid (pending, processing, completed, cancelled)
+     * 
+     * @throws Exception jika status tidak valid
      */
     public function updateStatus(int $id, string $status): Order
     {
@@ -110,7 +118,38 @@ class OrderService
     }
 
     /**
-     * Hapus pesanan
+     * Use Case: Batalkan pesanan
+     * 
+     * Business Logic:
+     * - Hanya pesanan dengan status 'pending' yang bisa dibatalkan
+     * 
+     * @throws Exception jika pesanan tidak bisa dibatalkan
+     */
+    public function cancel(int $id): Order
+    {
+        $order = $this->orderRepository->find($id);
+        
+        if (!$order) {
+            throw new Exception("Pesanan tidak ditemukan");
+        }
+        
+        if ($order->status !== 'pending') {
+            throw new Exception("Pesanan dengan status '{$order->status}' tidak bisa dibatalkan");
+        }
+        
+        return $this->orderRepository->update($id, ['status' => 'cancelled']);
+    }
+
+    /**
+     * Use Case: Update pesanan
+     */
+    public function update(int $id, array $data): Order
+    {
+        return $this->orderRepository->update($id, $data);
+    }
+
+    /**
+     * Use Case: Hapus pesanan
      */
     public function delete(int $id): bool
     {

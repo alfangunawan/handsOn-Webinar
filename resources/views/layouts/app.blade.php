@@ -22,6 +22,7 @@
             </a>
             <div class="nav-links">
                 <a href="{{ route('home') }}" class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}">Beranda</a>
+                <a href="{{ route('katerings.index') }}" class="nav-link {{ request()->routeIs('katerings.*') ? 'active' : '' }}">Katering</a>
                 <a href="{{ route('menus.index') }}" class="nav-link {{ request()->routeIs('menus.*') ? 'active' : '' }}">Menu</a>
                 @auth
                     <a href="{{ route('orders.index') }}" class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}">Pesanan Saya</a>

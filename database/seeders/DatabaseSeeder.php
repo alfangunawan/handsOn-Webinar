@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Modules\Katering\Database\Seeders\KateringDatabaseSeeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -16,13 +17,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create demo user
-        User::factory()->create([
-            'name' => 'Demo User',
-            'email' => 'demo@meallink.com',
-        ]);
+        // Create demo user (only if not exists)
+        User::firstOrCreate(
+            ['email' => 'demo@meallink.com'],
+            [
+                'name' => 'Demo User',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
 
         // Seed Katering module data
         $this->call(KateringDatabaseSeeder::class);
     }
 }
+
