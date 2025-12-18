@@ -1,0 +1,30 @@
+{
+    "name": "nwidart/katering",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Katering\\": "app/",
+            "Modules\\Katering\\Database\\Factories\\": "database/factories/",
+            "Modules\\Katering\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Katering\\Tests\\": "tests/"
+        }
+    }
+}

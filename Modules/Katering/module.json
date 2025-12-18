@@ -1,0 +1,11 @@
+{
+    "name": "Katering",
+    "alias": "katering",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Katering\\Providers\\KateringServiceProvider"
+    ],
+    "files": []
+}
