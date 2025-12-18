@@ -5,6 +5,7 @@ namespace Modules\Order\Http\Controllers;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
 use Modules\Order\Requests\CreateOrderRequest;
 use Modules\Order\Services\OrderService;
 
@@ -13,11 +14,6 @@ use Modules\Order\Services\OrderService;
  * 
  * Clean Architecture Flow:
  * Request (Validation) -> Controller -> Service (Use Case) -> Repository -> View
- * 
- * Controller hanya bertanggung jawab untuk:
- * 1. Menerima request (validasi di Request class)
- * 2. Memanggil Service layer
- * 3. Mengembalikan View atau Redirect
  */
 class OrderController extends Controller
 {
@@ -30,14 +26,12 @@ class OrderController extends Controller
 
     /**
      * GET /orders
-     * Menampilkan halaman daftar pesanan
-     * 
-     * Flow: Request -> Controller -> Service -> Repository -> View
+     * Menampilkan halaman daftar pesanan user yang login
      */
     public function index(): View
     {
-        // Demo: hardcoded user_id
-        $userId = 1;
+        // Gunakan ID user yang login
+        $userId = Auth::id();
         
         // Controller calls Service
         $orders = $this->orderService->getByUserId($userId);
@@ -52,43 +46,34 @@ class OrderController extends Controller
      */
     public function show($id): View
     {
-        // Controller calls Service
         $order = $this->orderService->findById($id);
         
-        if (!$order) {
+        // Pastikan order milik user yang login
+        if (!$order || $order->user_id !== Auth::id()) {
             abort(404, 'Pesanan tidak ditemukan');
         }
         
-        // Return View with data
         return view('pages.order-detail', compact('order'));
     }
 
     /**
      * POST /orders
      * Membuat pesanan baru
-     * 
-     * Flow: 
-     * 1. CreateOrderRequest -> Validasi input
-     * 2. Controller -> Meneruskan ke Service
-     * 3. OrderService -> Business logic 
-     * 4. OrderRepository -> Simpan ke database
-     * 5. Redirect dengan flash message
      */
     public function store(CreateOrderRequest $request): RedirectResponse
     {
-        // 1. Input sudah divalidasi oleh CreateOrderRequest
-        $userId = 1; // Demo: hardcoded user
+        // Gunakan ID user yang login
+        $userId = Auth::id();
         
         try {
-            // 2-4. Controller -> Service -> Repository
             $this->orderService->createOrder(
                 $userId,
                 $request->input('menu_id'),
                 $request->input('quantity')
             );
             
-            // 5. Redirect dengan success message
-            return redirect('/orders')->with('success', 'Pesanan berhasil dibuat!');
+            return redirect()->route('orders.index')
+                ->with('success', 'Pesanan berhasil dibuat!');
             
         } catch (\Exception $e) {
             return redirect()->back()

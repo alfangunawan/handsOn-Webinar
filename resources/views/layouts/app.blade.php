@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="MealLink - Marketplace Katering Online Terbaik">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'MealLink - Marketplace Katering')</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,18 +16,30 @@
     <!-- Navigation -->
     <nav class="navbar">
         <div class="container navbar-content">
-            <a href="/" class="logo">
+            <a href="{{ route('home') }}" class="logo">
                 <span class="logo-icon">🍽️</span>
                 <span class="logo-text">Meal<span class="logo-highlight">Link</span></span>
             </a>
             <div class="nav-links">
-                <a href="/" class="nav-link {{ request()->is('/') ? 'active' : '' }}">Beranda</a>
-                <a href="/menus" class="nav-link {{ request()->is('menus*') ? 'active' : '' }}">Menu</a>
-                <a href="/orders" class="nav-link {{ request()->is('orders*') ? 'active' : '' }}">Pesanan</a>
+                <a href="{{ route('home') }}" class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}">Beranda</a>
+                <a href="{{ route('menus.index') }}" class="nav-link {{ request()->routeIs('menus.*') ? 'active' : '' }}">Menu</a>
+                @auth
+                    <a href="{{ route('orders.index') }}" class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}">Pesanan Saya</a>
+                @endauth
             </div>
             <div class="nav-actions">
-                <button class="btn btn-outline">Masuk</button>
-                <button class="btn btn-primary">Daftar</button>
+                @guest
+                    <a href="{{ route('login') }}" class="btn btn-outline">Masuk</a>
+                    <a href="{{ route('register') }}" class="btn btn-primary">Daftar</a>
+                @else
+                    <div class="user-menu">
+                        <span class="user-name">{{ Auth::user()->name }}</span>
+                        <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+                            @csrf
+                            <button type="submit" class="btn btn-outline">Keluar</button>
+                        </form>
+                    </div>
+                @endguest
             </div>
         </div>
     </nav>
@@ -41,7 +54,7 @@
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-brand">
-                    <a href="/" class="logo">
+                    <a href="{{ route('home') }}" class="logo">
                         <span class="logo-icon">🍽️</span>
                         <span class="logo-text">Meal<span class="logo-highlight">Link</span></span>
                     </a>
@@ -50,9 +63,11 @@
                 <div class="footer-links">
                     <h4>Navigasi</h4>
                     <ul>
-                        <li><a href="/">Beranda</a></li>
-                        <li><a href="/menus">Menu</a></li>
-                        <li><a href="/orders">Pesanan</a></li>
+                        <li><a href="{{ route('home') }}">Beranda</a></li>
+                        <li><a href="{{ route('menus.index') }}">Menu</a></li>
+                        @auth
+                            <li><a href="{{ route('orders.index') }}">Pesanan</a></li>
+                        @endauth
                     </ul>
                 </div>
                 <div class="footer-links">

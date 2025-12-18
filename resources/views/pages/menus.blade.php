@@ -14,72 +14,87 @@
     <!-- Menu Section -->
     <section class="section">
         <div class="container">
+            @if(session('success'))
+                <div class="alert alert-success">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="alert alert-error">
+                    {{ session('error') }}
+                </div>
+            @endif
+
             @if($menus->count() > 0)
                 <div class="menu-grid">
                     @foreach($menus as $menu)
                         <div class="menu-card">
-                            <div class="menu-image">🍽️</div>
+                            <div class="menu-image">
+                                @php
+                                    $icons = ['🍛', '🍲', '🥗', '🍖', '🍜', '🍱', '🍽️'];
+                                    $icon = $icons[$menu->id % count($icons)];
+                                @endphp
+                                {{ $icon }}
+                            </div>
                             <div class="menu-content">
                                 <span class="menu-category">Katering</span>
                                 <h3>{{ $menu->name }}</h3>
                                 <p>{{ $menu->description ?? 'Menu lezat dari katering terpercaya.' }}</p>
                                 <div class="menu-footer">
                                     <div class="menu-price">Rp {{ number_format($menu->price, 0, ',', '.') }} <span>/porsi</span></div>
-                                    <form action="{{ route('orders.store') }}" method="POST" style="display: inline;">
-                                        @csrf
-                                        <input type="hidden" name="menu_id" value="{{ $menu->id }}">
-                                        <input type="hidden" name="quantity" value="1">
-                                        <button type="submit" class="btn btn-primary">Pesan</button>
-                                    </form>
+                                    
+                                    @auth
+                                        <form action="{{ route('orders.store') }}" method="POST" class="order-form">
+                                            @csrf
+                                            <input type="hidden" name="menu_id" value="{{ $menu->id }}">
+                                            <div class="quantity-input">
+                                                <input type="number" name="quantity" value="1" min="1" max="100" class="qty-field">
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Pesan</button>
+                                        </form>
+                                    @else
+                                        <a href="{{ route('login') }}" class="btn btn-primary">Login untuk Pesan</a>
+                                    @endauth
                                 </div>
                             </div>
                         </div>
                     @endforeach
                 </div>
             @else
-                <!-- Empty State / Demo Data -->
-                <div class="menu-grid">
-                    <div class="menu-card">
-                        <div class="menu-image">🍛</div>
-                        <div class="menu-content">
-                            <span class="menu-category">Nasi Box</span>
-                            <h3>Nasi Ayam Geprek</h3>
-                            <p>Nasi putih dengan ayam geprek sambal pedas, lalapan segar, dan kerupuk renyah.</p>
-                            <div class="menu-footer">
-                                <div class="menu-price">Rp 25.000 <span>/porsi</span></div>
-                                <button class="btn btn-primary" disabled>Pesan</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="menu-card">
-                        <div class="menu-image">🍲</div>
-                        <div class="menu-content">
-                            <span class="menu-category">Prasmanan</span>
-                            <h3>Rendang Padang</h3>
-                            <p>Rendang daging sapi empuk dengan bumbu rempah khas Padang yang nikmat.</p>
-                            <div class="menu-footer">
-                                <div class="menu-price">Rp 35.000 <span>/porsi</span></div>
-                                <button class="btn btn-primary" disabled>Pesan</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="menu-card">
-                        <div class="menu-image">🥗</div>
-                        <div class="menu-content">
-                            <span class="menu-category">Sehat</span>
-                            <h3>Salad Bowl Premium</h3>
-                            <p>Sayuran segar dengan protein pilihan dan dressing homemade yang lezat.</p>
-                            <div class="menu-footer">
-                                <div class="menu-price">Rp 30.000 <span>/porsi</span></div>
-                                <button class="btn btn-primary" disabled>Pesan</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="empty-state" style="margin-top: 40px;">
-                    <p style="color: var(--gray-500);">Belum ada menu di database. Jalankan seeder untuk menambahkan data demo.</p>
+                <div class="empty-state">
+                    <div class="empty-state-icon">🍽️</div>
+                    <h3>Belum Ada Menu</h3>
+                    <p>Silakan jalankan seeder untuk menambahkan data demo.</p>
+                    <code>php artisan db:seed</code>
                 </div>
             @endif
         </div>
     </section>
 @endsection
+
+@push('styles')
+<style>
+    .order-form {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .quantity-input {
+        display: flex;
+        align-items: center;
+    }
+    .qty-field {
+        width: 60px;
+        padding: 8px;
+        border: 2px solid var(--gray-200);
+        border-radius: var(--radius);
+        text-align: center;
+        font-size: 0.9rem;
+    }
+    .qty-field:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+</style>
+@endpush

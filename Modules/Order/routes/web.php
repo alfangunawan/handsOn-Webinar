@@ -8,11 +8,12 @@ use Modules\Order\Http\Controllers\OrderController;
 | Web Routes - Order Module
 |--------------------------------------------------------------------------
 |
-| Clean Architecture Flow:
-| Request (Validation) -> Controller -> Service -> Repository -> View
+| Routes yang memerlukan autentikasi
 |
 */
 
-Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
-Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
-Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
+    Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+});

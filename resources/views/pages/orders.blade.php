@@ -7,7 +7,7 @@
     <section class="page-header">
         <div class="container">
             <h1>Pesanan Saya</h1>
-            <p>Lacak dan kelola semua pesanan katering Anda</p>
+            <p>Selamat datang, {{ Auth::user()->name }}! Lacak dan kelola semua pesanan katering Anda</p>
         </div>
     </section>
 
@@ -29,13 +29,34 @@
             @if($orders->count() > 0)
                 @foreach($orders as $order)
                     <div class="order-card">
-                        <div class="order-icon">🍽️</div>
+                        <div class="order-icon">
+                            @php
+                                $icons = ['🍛', '🍲', '🥗', '🍖', '🍜', '🍱'];
+                                $icon = $icons[$order->menu_id % count($icons)];
+                            @endphp
+                            {{ $icon }}
+                        </div>
                         <div class="order-info">
                             <h4>Pesanan #{{ $order->id }}</h4>
-                            <p>Qty: {{ $order->quantity }} porsi • {{ $order->created_at->format('d M Y') }}</p>
+                            <p>Qty: {{ $order->quantity }} porsi • {{ $order->created_at->format('d M Y H:i') }}</p>
                         </div>
                         <span class="order-status {{ $order->status }}">
-                            {{ ucfirst($order->status) }}
+                            @switch($order->status)
+                                @case('pending')
+                                    Menunggu
+                                    @break
+                                @case('processing')
+                                    Diproses
+                                    @break
+                                @case('completed')
+                                    Selesai
+                                    @break
+                                @case('cancelled')
+                                    Dibatalkan
+                                    @break
+                                @default
+                                    {{ ucfirst($order->status) }}
+                            @endswitch
                         </span>
                         <div class="order-price">Rp {{ number_format($order->total_price, 0, ',', '.') }}</div>
                     </div>
